@@ -1,0 +1,42 @@
+services:
+  db-users:
+    image: postgres:14.3
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_USERS_PASSWORD}
+      POSTGRES_DB: ${DB_USERS_NAME}
+    ports:
+      - "${USERS_DB_PORT}:5432"
+    volumes:
+      - ./postgres-users:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    networks:
+      - artemisa-network
+
+  users-service:
+    build:
+      context: ./artemisa-users-api
+    container_name: artemisa-users-api
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: db-users
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_USERS_PASSWORD}
+      DB_NAME: ${DB_USERS_NAME}
+    depends_on:
+      - db-users
+    env_file:
+      - ./.env
+    volumes:
+      - ./artemisa-users-api:/app
+      - /app/node_modules
+    networks:
+      - artemisa-network
+
+networks:
+  artemisa-network:
+    driver: bridge
